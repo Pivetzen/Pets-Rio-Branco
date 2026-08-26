@@ -187,6 +187,7 @@
       position: relative;
       height: 220px;
       width: 100%;
+      background-color: #e2e8f0;
     }
 
     .card-img-wrapper img {
@@ -367,9 +368,7 @@
   </div>
 
   <script>
-    // =========================================================================
-    // COLE AQUI OS LINKS DOS CSVs DAS ABAS DA SUA PLANILHA PUBLICADA
-    // =========================================================================
+    // Cole aqui suas URLs CSV públicas publicadas no Google Sheets
     const URL_CSV_ANIMAIS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=0&single=true&output=csv";
     const URL_CSV_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=1564565152&single=true&output=csv";
 
@@ -381,13 +380,25 @@
 
     function converterValorFloat(str) {
       if (!str) return 0;
-      // Trata formato PT-BR se houver vírgula
       let limpo = str.toString().replace("R$", "").trim().replace(".", "").replace(",", ".");
       return parseFloat(limpo) || 0;
     }
 
+    // Função auxiliar para ler chaves do objeto ignorando maiúsculas, minúsculas e espaços extras
+    function obterPropriedade(obj, chavesPossiveis) {
+      const keys = Object.keys(obj);
+      for (let key of keys) {
+        const keyClean = key.toLowerCase().trim();
+        for (let busca of chavesPossiveis) {
+          if (keyClean === busca.toLowerCase().trim() || keyClean.includes(busca.toLowerCase().trim())) {
+            return obj[key];
+          }
+        }
+      }
+      return "";
+    }
+
     function carregarDadosPlanilha() {
-      // Carrega primeiro o CSV Financeiro para fazer o somatório total
       Papa.parse(URL_CSV_FINANCEIRO, {
         download: true,
         header: true,
@@ -397,44 +408,40 @@
           
           let totalArrecadado = 0;
           let totalGastos = 0;
-
-          // Mapeia arredados por animal
           const arrecadadoPorAnimal = {};
 
           transacoes.forEach(t => {
-            const val = converterValorFloat(t.valor);
-            const tipo = t.tipo ? t.tipo.trim() : '';
-            const animalId = t.animal_id ? t.animal_id.trim() : '0';
+            const val = converterValorFloat(obterPropriedade(t, ['valor', 'G (valor)']));
+            const tipo = obterPropriedade(t, ['tipo', 'D (tipo)']).trim().toLowerCase();
+            const animalId = obterPropriedade(t, ['animal_id', 'B (animal_id)']).trim();
 
-            if (tipo.toLowerCase() === 'entrada') {
+            if (tipo === 'entrada') {
               totalArrecadado += val;
               arrecadadoPorAnimal[animalId] = (arrecadadoPorAnimal[animalId] || 0) + val;
-            } else if (tipo.toLowerCase() === 'saída' || tipo.toLowerCase() === 'saida') {
+            } else if (tipo === 'saída' || tipo === 'saida') {
               totalGastos += val;
             }
           });
 
-          // Atualiza o topo do dashboard
           document.getElementById('total-arrecadado').innerText = formatarMoeda(totalArrecadado);
           document.getElementById('total-gastos').innerText = formatarMoeda(totalGastos);
           document.getElementById('saldo-atual').innerText = formatarMoeda(totalArrecadado - totalGastos);
 
-          // Agora carrega a aba de Animais
           Papa.parse(URL_CSV_ANIMAIS, {
             download: true,
             header: true,
             skipEmptyLines: true,
             complete: function(resultsAnimais) {
               listaAnimaisGeral = resultsAnimais.data.map(a => {
-                const idStr = a.id ? a.id.trim() : '';
+                const idStr = obterPropriedade(a, ['id', 'A (id)']).trim();
                 return {
                   id: idStr,
-                  nome: a.nome,
-                  especie: a.especie,
-                  status: a.status,
-                  foto: a.foto_url,
-                  historia: a.historia,
-                  meta: converterValorFloat(a.meta_financeira),
+                  nome: obterPropriedade(a, ['nome', 'B (nome)']) || 'Sem nome',
+                  especie: obterPropriedade(a, ['especie', 'C (especie)']) || 'Não especificado',
+                  status: obterPropriedade(a, ['status', 'D (status)']) || 'Sem status',
+                  foto: obterPropriedade(a, ['foto_url', 'E (foto_url)']),
+                  historia: obterPropriedade(a, ['historia', 'F (historia)']) || 'Sem descrição cadastrada.',
+                  meta: converterValorFloat(obterPropriedade(a, ['meta_financeira', 'G (meta_financeira)'])),
                   arrecadado: arrecadadoPorAnimal[idStr] || 0
                 };
               });
@@ -462,7 +469,7 @@
         const cardHTML = `
           <div class="animal-card">
             <div class="card-img-wrapper">
-              <img src="${animal.foto}" alt="${animal.nome}">
+              <img src="${animal.foto}" alt="${animal.nome}" onerror="this.src='https://via.placeholder.com/400x220?text=Sem+Foto'">
               <span class="badge-status ${statusClass}">${animal.status}</span>
             </div>
             <div class="card-content">
