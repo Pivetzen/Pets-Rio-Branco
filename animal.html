@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <!-- PapaParse para ler CSV da planilha -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
   <style>
     :root {
       --primary: #4f46e5;
@@ -46,7 +49,7 @@
       padding: 0 20px;
     }
 
-    /* NAV / TOP BAR */
+    /* TOP BAR */
     .top-bar {
       padding: 20px 0;
       margin-bottom: 20px;
@@ -71,7 +74,7 @@
       color: white;
     }
 
-    /* HEADER ANIMAL PROFILE */
+    /* PROFILE GRID */
     .profile-grid {
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -154,7 +157,7 @@
       line-height: 1.6;
     }
 
-    /* RESUMO FINANCEIRO DO ANIMAL */
+    /* SUMMARY CARDS */
     .fin-summary-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -257,11 +260,9 @@
       transition: opacity 0.2s ease;
     }
 
-    .btn-copy-pix:hover {
-      opacity: 0.9;
-    }
+    .btn-copy-pix:hover { opacity: 0.9; }
 
-    /* SEÇÃO DA TABELA DE PRESTAÇÃO DE CONTAS */
+    /* TRANSPARENCY SECTION */
     .transparency-section {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -310,7 +311,6 @@
       color: white;
     }
 
-    /* TABELA */
     .table-responsive {
       width: 100%;
       overflow-x: auto;
@@ -338,9 +338,7 @@
       font-size: 0.9rem;
     }
 
-    tr:last-child td {
-      border-bottom: none;
-    }
+    tr:last-child td { border-bottom: none; }
 
     .badge-trans-type {
       display: inline-flex;
@@ -353,15 +351,8 @@
       text-transform: uppercase;
     }
 
-    .badge-trans-type.entrada {
-      background: #d1fae5;
-      color: var(--success);
-    }
-
-    .badge-trans-type.saida {
-      background: #fee2e2;
-      color: var(--danger);
-    }
+    .badge-trans-type.entrada { background: #d1fae5; color: var(--success); }
+    .badge-trans-type.saida { background: #fee2e2; color: var(--danger); }
 
     .empty-state {
       text-align: center;
@@ -373,14 +364,12 @@
 <body>
 
   <div class="container">
-    <!-- TOP BAR -->
     <div class="top-bar">
       <a href="index.html" class="btn-back">
         <i class="fa-solid fa-arrow-left"></i> Voltar ao Dashboard
       </a>
     </div>
 
-    <!-- PROFILE GRID -->
     <div class="profile-grid">
       <div class="profile-img-container">
         <img id="animal-foto" src="" alt="Foto do animal">
@@ -393,9 +382,8 @@
           <span id="animal-especie" class="profile-species">---</span>
         </div>
 
-        <p id="animal-historia" class="profile-history">Carregando história do animalzinho...</p>
+        <p id="animal-historia" class="profile-history">Carregando histórico e dados do animal...</p>
 
-        <!-- CARDS DE ESTATÍSTICA FINANCEIRA DO ANIMAL -->
         <div class="fin-summary-cards">
           <div class="fin-card">
             <span>Meta Financeira</span>
@@ -415,7 +403,6 @@
           </div>
         </div>
 
-        <!-- BARRA DE PROGRESSO DA META -->
         <div class="progress-section">
           <div class="progress-header">
             <span>Progresso da Arrecadação</span>
@@ -426,11 +413,10 @@
           </div>
         </div>
 
-        <!-- BOX PIX PARA DOAR PARA ESTE ANIMAL -->
         <div class="pix-card">
           <div class="pix-info">
             <h4>Ajude o(a) <span id="pix-animal-nome">este animal</span></h4>
-            <p>Chave PIX (CNPJ/Telefone): <strong>85999999999</strong></p>
+            <p>Chave PIX (CNPJ/Telefone): <strong id="pix-chave">85999999999</strong></p>
           </div>
           <button class="btn-copy-pix" onclick="copiarPix()">
             <i class="fa-regular fa-copy"></i> Copiar PIX
@@ -439,7 +425,6 @@
       </div>
     </div>
 
-    <!-- TABELA DE TRANSPARÊNCIA E PRESTAÇÃO DE CONTAS -->
     <div class="transparency-section">
       <div class="table-header">
         <div class="table-title">
@@ -447,9 +432,9 @@
           <p>Todas as doações recebidas e gastos efetuados exclusivamente com este animal.</p>
         </div>
         <div class="table-filters">
-          <button class="tab-btn active" onclick="filtrarTabela('todos')">Todos</button>
-          <button class="tab-btn" onclick="filtrarTabela('Entrada')">Entradas (Doações)</button>
-          <button class="tab-btn" onclick="filtrarTabela('Saída')">Saídas (Gastos)</button>
+          <button class="tab-btn active" onclick="filtrarTabela('todos', event)">Todos</button>
+          <button class="tab-btn" onclick="filtrarTabela('Entrada', event)">Entradas (Doações)</button>
+          <button class="tab-btn" onclick="filtrarTabela('Saída', event)">Saídas (Gastos)</button>
         </div>
       </div>
 
@@ -465,7 +450,9 @@
             </tr>
           </thead>
           <tbody id="tabela-transacoes">
-            <!-- Linhas injetadas via JavaScript -->
+            <tr>
+              <td colspan="5" class="empty-state">Carregando movimentações...</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -473,108 +460,93 @@
   </div>
 
   <script>
-    // DADOS MOCKADOS PARA SIMULAÇÃO DA PLANILHA (Trocaremos pela integração real da API)
-    const bancoAnimais = [
-      {
-        id: 1,
-        nome: "Thor",
-        especie: "Cachorro",
-        status: "Tratamento",
-        foto: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=600",
-        historia: "Thor foi encontrado gravemente atropelado perto da praça central com fratura exposta na pata. Passou por cirurgia de emergência e precisa de acompanhamento diário com trocas de curativo, analgésicos e fisioterapia.",
-        meta: 1200.00
-      },
-      {
-        id: 2,
-        nome: "Mia",
-        especie: "Gato",
-        status: "Adoção",
-        foto: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=600",
-        historia: "Mia foi resgatada prenha em uma caixa de papelão. Teve seus filhotes em lar temporário seguro, todos foram vacinados e agora Mia já está castrada e pronta para encontrar uma família responsável.",
-        meta: 400.00
-      },
-      {
-        id: 3,
-        nome: "Bob",
-        especie: "Cachorro",
-        status: "Adoção",
-        foto: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&q=80&w=600",
-        historia: "Bob é um cãozinho idoso e extremamente dócil que viveu anos perambulando pelo centro comercial. Recebeu tratamento para dermatite, vermifugação e vacinação completa.",
-        meta: 500.00
-      }
-    ];
-
-    const bancoTransacoes = [
-      { id: 101, animal_id: 1, data: "10/08/2026", tipo: "Entrada", categoria: "Doação PIX", descricao: "Doação via PIX - Maria S.", valor: 150.00 },
-      { id: 102, animal_id: 1, data: "11/08/2026", tipo: "Saída", categoria: "Veterinário", descricao: "Consulta Veterinária e Raio-X", valor: 280.00 },
-      { id: 103, animal_id: 1, data: "12/08/2026", tipo: "Entrada", categoria: "Doação PIX", descricao: "Doação Rifa Solidária - Carlos M.", valor: 300.00 },
-      { id: 104, animal_id: 1, data: "13/08/2026", tipo: "Saída", categoria: "Medicamentos", descricao: "Antibióticos e Anti-inflamatórios", valor: 125.00 },
-      { id: 105, animal_id: 1, data: "15/08/2026", tipo: "Entrada", categoria: "Doação PIX", descricao: "Doação Anônima", valor: 400.00 },
-      { id: 106, animal_id: 1, data: "18/08/2026", tipo: "Saída", categoria: "Procedimento", descricao: "Cirurgia de Correção da Pata", valor: 450.00 },
-      
-      { id: 201, animal_id: 2, data: "05/08/2026", tipo: "Entrada", categoria: "Doação PIX", descricao: "Apadrinhamento Gatos - Ana P.", valor: 200.00 },
-      { id: 202, animal_id: 2, data: "06/08/2026", tipo: "Saída", categoria: "Veterinário", descricao: "Procedimento de Castração + Microchip", valor: 180.00 },
-      { id: 203, animal_id: 2, data: "10/08/2026", tipo: "Entrada", categoria: "Doação PIX", descricao: "Doação via Instagram", valor: 200.00 },
-      { id: 204, animal_id: 2, data: "12/08/2026", tipo: "Saída", categoria: "Alimentação", descricao: "Pacote Ração Castrados 10kg", valor: 140.00 }
-    ];
-
-    // FORMATAR MOEDA BRASILEIRA
-    function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    // CAPTURAR PARÂMETRO DA URL (?id=X)
-    function obterAnimalIdURL() {
-      const params = new URLSearchParams(window.location.search);
-      return parseInt(params.get('id')) || 1; // Padrão é 1 se não passar id
-    }
+    // =========================================================================
+    // COLE AQUI OS LINKS DOS CSVs DAS ABAS DA SUA PLANILHA PUBLICADA
+    // =========================================================================
+    const URL_CSV_ANIMAIS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=0&single=true&output=csv";
+    const URL_CSV_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=1564565152&single=true&output=csv";
 
     let transacoesDoAnimalAtual = [];
 
-    // INICIALIZAR E PREENCHER PÁGINA DO ANIMAL
-    function carregarDadosAnimal() {
-      const id = obterAnimalIdURL();
-      const animal = bancoAnimais.find(a => a.id === id) || bancoAnimais[0];
-      
-      // Filtrar transações deste animal
-      transacoesDoAnimalAtual = bancoTransacoes.filter(t => t.animal_id === animal.id);
-
-      // Calcular totais
-      const totalEntradas = transacoesDoAnimalAtual
-        .filter(t => t.tipo === 'Entrada')
-        .reduce((sum, t) => sum + t.valor, 0);
-
-      const totalSaidas = transacoesDoAnimalAtual
-        .filter(t => t.tipo === 'Saída')
-        .reduce((sum, t) => sum + t.valor, 0);
-
-      const saldo = totalEntradas - totalSaidas;
-      const percentualMeta = Math.min(Math.round((totalEntradas / animal.meta) * 100), 100);
-
-      // Preencher elementos visuais da página
-      document.getElementById('animal-nome').innerText = animal.nome;
-      document.getElementById('pix-animal-nome').innerText = animal.nome;
-      document.getElementById('animal-especie').innerText = animal.especie;
-      document.getElementById('animal-historia').innerText = animal.historia;
-      document.getElementById('animal-foto').src = animal.foto;
-
-      const badge = document.getElementById('animal-badge-status');
-      badge.innerText = animal.status;
-      badge.className = `badge-status ${animal.status.toLowerCase().replace('çã', 'ca')}`;
-
-      document.getElementById('meta-valor').innerText = formatarMoeda(animal.meta);
-      document.getElementById('arrecadado-valor').innerText = formatarMoeda(totalEntradas);
-      document.getElementById('gastos-valor').innerText = formatarMoeda(totalSaidas);
-      document.getElementById('saldo-valor').innerText = formatarMoeda(saldo);
-
-      document.getElementById('meta-percentual').innerText = `${percentualMeta}%`;
-      document.getElementById('meta-bar-fill').style.width = `${percentualMeta}%`;
-
-      // Renderizar a tabela de prestação de contas
-      renderizarTabela(transacoesDoAnimalAtual);
+    function formatarMoeda(valor) {
+      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    // RENDERIZAR TABELA
+    function converterValorFloat(str) {
+      if (!str) return 0;
+      let limpo = str.toString().replace("R$", "").trim().replace(".", "").replace(",", ".");
+      return parseFloat(limpo) || 0;
+    }
+
+    function obterAnimalIdURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    function carregarDadosAnimal() {
+      const targetId = obterAnimalIdURL();
+
+      Papa.parse(URL_CSV_ANIMAIS, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(resultsAnimais) {
+          const animal = resultsAnimais.data.find(a => (a.id ? a.id.trim() : '') === targetId) || resultsAnimais.data[0];
+
+          if (!animal) return;
+
+          const meta = converterValorFloat(animal.meta_financeira);
+
+          document.getElementById('animal-nome').innerText = animal.nome;
+          document.getElementById('pix-animal-nome').innerText = animal.nome;
+          document.getElementById('animal-especie').innerText = animal.especie;
+          document.getElementById('animal-historia').innerText = animal.historia;
+          document.getElementById('animal-foto').src = animal.foto_url;
+
+          const badge = document.getElementById('animal-badge-status');
+          badge.innerText = animal.status;
+          badge.className = `badge-status ${(animal.status || '').toLowerCase().replace('çã', 'ca')}`;
+
+          Papa.parse(URL_CSV_FINANCEIRO, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(resultsFin) {
+              const animalIdStr = animal.id ? animal.id.trim() : '';
+              
+              transacoesDoAnimalAtual = resultsFin.data.filter(t => (t.animal_id ? t.animal_id.trim() : '') === animalIdStr);
+
+              let totalEntradas = 0;
+              let totalSaidas = 0;
+
+              transacoesDoAnimalAtual.forEach(t => {
+                const val = converterValorFloat(t.valor);
+                const tipo = t.tipo ? t.tipo.trim().toLowerCase() : '';
+                if (tipo === 'entrada') {
+                  totalEntradas += val;
+                } else if (tipo === 'saída' || tipo === 'saida') {
+                  totalSaidas += val;
+                }
+              });
+
+              const saldo = totalEntradas - totalSaidas;
+              const percentualMeta = meta > 0 ? Math.min(Math.round((totalEntradas / meta) * 100), 100) : 0;
+
+              document.getElementById('meta-valor').innerText = formatarMoeda(meta);
+              document.getElementById('arrecadado-valor').innerText = formatarMoeda(totalEntradas);
+              document.getElementById('gastos-valor').innerText = formatarMoeda(totalSaidas);
+              document.getElementById('saldo-valor').innerText = formatarMoeda(saldo);
+
+              document.getElementById('meta-percentual').innerText = `${percentualMeta}%`;
+              document.getElementById('meta-bar-fill').style.width = `${percentualMeta}%`;
+
+              renderizarTabela(transacoesDoAnimalAtual);
+            }
+          });
+        }
+      });
+    }
+
     function renderizarTabela(lista) {
       const tbody = document.getElementById('tabela-transacoes');
       tbody.innerHTML = '';
@@ -583,7 +555,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="empty-state">
-              Nenhuma movimentação registrada para este animal ainda.
+              Nenhuma movimentação financeira registrada para este animal ainda.
             </td>
           </tr>
         `;
@@ -591,10 +563,12 @@
       }
 
       lista.forEach(item => {
-        const isEntrada = item.tipo === 'Entrada';
+        const tipoLimpo = item.tipo ? item.tipo.trim().toLowerCase() : '';
+        const isEntrada = tipoLimpo === 'entrada';
         const badgeClass = isEntrada ? 'entrada' : 'saida';
         const icon = isEntrada ? 'fa-circle-arrow-down' : 'fa-circle-arrow-up';
         const sinal = isEntrada ? '+' : '-';
+        const val = converterValorFloat(item.valor);
 
         const rowHTML = `
           <tr>
@@ -607,7 +581,7 @@
             <td><strong>${item.categoria}</strong></td>
             <td>${item.descricao}</td>
             <td style="font-weight: 700; color: ${isEntrada ? 'var(--success)' : 'var(--danger)'}">
-              ${sinal} ${formatarMoeda(item.valor)}
+              ${sinal} ${formatarMoeda(val)}
             </td>
           </tr>
         `;
@@ -615,27 +589,24 @@
       });
     }
 
-    // FILTRO DA TABELA
-    function filtrarTabela(tipo) {
+    function filtrarTabela(tipo, e) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      if (e) e.target.classList.add('active');
 
       if (tipo === 'todos') {
         renderizarTabela(transacoesDoAnimalAtual);
       } else {
-        const filtradas = transacoesDoAnimalAtual.filter(t => t.tipo === tipo);
+        const filtradas = transacoesDoAnimalAtual.filter(t => (t.tipo ? t.tipo.trim().toLowerCase() : '') === tipo.toLowerCase());
         renderizarTabela(filtradas);
       }
     }
 
-    // COPIAR CHAVE PIX
     function copiarPix() {
-      const chavePix = "85999999999";
+      const chavePix = document.getElementById('pix-chave').innerText;
       navigator.clipboard.writeText(chavePix);
-      alert("Chave PIX copiada com sucesso: " + chavePix);
+      alert("Chave PIX copiada com sucesso!");
     }
 
-    // INICIALIZAÇÃO DA PÁGINA
     window.onload = carregarDadosAnimal;
   </script>
 </body>
