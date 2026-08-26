@@ -3,14 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prestação de Contas - Resgate Animal Regional</title>
-  <!-- Google Fonts & Font Awesome Icons -->
+  <title>Custos do Animal - Resgate Animal Regional</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- PapaParse para ler CSV da planilha -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
@@ -18,7 +15,6 @@
       --primary: #4f46e5;
       --primary-hover: #4338ca;
       --success: #10b981;
-      --warning: #f59e0b;
       --danger: #ef4444;
       --bg-main: #f8fafc;
       --card-bg: #ffffff;
@@ -29,447 +25,94 @@
       --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); padding: 40px 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; background: #e0e7ff; color: var(--primary); padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 0.9rem; margin-bottom: 24px; }
+    
+    .profile-card { background: var(--card-bg); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: grid; grid-template-columns: 280px 1fr; gap: 30px; margin-bottom: 30px; }
+    .profile-img-wrapper { height: 260px; border-radius: 12px; overflow: hidden; background: #e2e8f0; position: relative; }
+    .profile-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    .badge-status { position: absolute; top: 12px; right: 12px; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: white; }
+    .badge-status.tratamento { background: #f59e0b; }
+    .badge-status.adocao { background: #10b981; }
 
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      line-height: 1.5;
-      padding-bottom: 60px;
-    }
+    .profile-info h1 { font-size: 2rem; font-weight: 800; }
+    .species-tag { display: inline-block; background: #f1f5f9; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-left: 10px; }
+    .history-text { margin: 12px 0 20px 0; color: var(--text-muted); font-size: 0.95rem; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .metric-box { background: #f8fafc; border: 1px solid var(--border-color); padding: 16px; border-radius: 12px; text-align: center; }
+    .metric-box label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; }
+    .metric-box .val { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
+    .metric-box .val.red { color: var(--danger); }
 
-    /* TOP BAR */
-    .top-bar {
-      padding: 20px 0;
-      margin-bottom: 20px;
-    }
+    .progress-box { margin-bottom: 24px; }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+    .progress-bar-bg { height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--danger); border-radius: 5px; }
 
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 0.95rem;
-      background: #e0e7ff;
-      padding: 10px 18px;
-      border-radius: 30px;
-      transition: all 0.2s ease;
-    }
+    .table-section { background: var(--card-bg); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .table-header { margin-bottom: 20px; }
+    .table-header h2 { font-size: 1.25rem; font-weight: 700; }
+    .table-header p { font-size: 0.85rem; color: var(--text-muted); }
 
-    .btn-back:hover {
-      background: var(--primary);
-      color: white;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; padding: 12px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; border-bottom: 2px solid var(--border-color); }
+    td { padding: 16px 12px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); }
+    .tag-saida { background: #fee2e2; color: var(--danger); font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
 
-    /* PROFILE GRID */
-    .profile-grid {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 32px;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 32px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-      margin-bottom: 32px;
-    }
-
-    @media (max-width: 850px) {
-      .profile-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .profile-img-container {
-      position: relative;
-      width: 100%;
-      height: 380px;
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .profile-img-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .badge-status {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      backdrop-filter: blur(8px);
-      color: white;
-    }
-
-    .badge-status.tratamento { background: rgba(245, 158, 11, 0.95); }
-    .badge-status.adocao { background: rgba(16, 185, 129, 0.95); }
-    .badge-status.adotado { background: rgba(79, 70, 229, 0.95); }
-
-    .profile-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .profile-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .profile-name {
-      font-size: 2.2rem;
-      font-weight: 800;
-    }
-
-    .profile-species {
-      font-size: 0.9rem;
-      background: #f1f5f9;
-      padding: 6px 14px;
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-weight: 700;
-    }
-
-    .profile-history {
-      font-size: 1rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    /* SUMMARY CARDS */
-    .fin-summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .fin-card {
-      background: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .fin-card span {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .fin-card .amount {
-      font-size: 1.25rem;
-      font-weight: 800;
-    }
-
-    .amount.green { color: var(--success); }
-    .amount.red { color: var(--danger); }
-    .amount.purple { color: var(--primary); }
-
-    /* PROGRESS BAR */
-    .progress-section {
-      background: #f1f5f9;
-      padding: 18px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-    }
-
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .progress-bar-bg {
-      height: 10px;
-      background: #cbd5e1;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-      border-radius: 6px;
-      transition: width 0.5s ease;
-    }
-
-    /* PIX CARD */
-    .pix-card {
-      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-      color: white;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-top: auto;
-    }
-
-    .pix-info h4 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .pix-info p {
-      font-size: 0.85rem;
-      opacity: 0.9;
-    }
-
-    .btn-copy-pix {
-      background: white;
-      color: #047857;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      white-space: nowrap;
-      transition: opacity 0.2s ease;
-    }
-
-    .btn-copy-pix:hover { opacity: 0.9; }
-
-    /* TRANSPARENCY SECTION */
-    .transparency-section {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 32px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-    }
-
-    .table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .table-title h3 {
-      font-size: 1.3rem;
-      font-weight: 700;
-    }
-
-    .table-title p {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-
-    .table-filters {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tab-btn {
-      background: #f1f5f9;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      background: var(--primary);
-      color: white;
-    }
-
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    th {
-      background: #f8fafc;
-      padding: 14px 16px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    td {
-      padding: 16px;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.9rem;
-    }
-
-    tr:last-child td { border-bottom: none; }
-
-    .badge-trans-type {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-
-    .badge-trans-type.entrada { background: #d1fae5; color: var(--success); }
-    .badge-trans-type.saida { background: #fee2e2; color: var(--danger); }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-muted);
+    @media (max-width: 768px) {
+      .profile-card { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="top-bar">
-      <a href="index.html" class="btn-back">
-        <i class="fa-solid fa-arrow-left"></i> Voltar ao Dashboard
-      </a>
-    </div>
+    <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar ao Dashboard</a>
 
-    <div class="profile-grid">
-      <div class="profile-img-container">
-        <img id="animal-foto" src="" alt="Foto do animal">
-        <span id="animal-badge-status" class="badge-status">---</span>
-      </div>
-
-      <div class="profile-info">
-        <div class="profile-header">
-          <h1 id="animal-nome" class="profile-name">Carregando...</h1>
-          <span id="animal-especie" class="profile-species">---</span>
-        </div>
-
-        <p id="animal-historia" class="profile-history">Carregando histórico e dados do animal...</p>
-
-        <div class="fin-summary-cards">
-          <div class="fin-card">
-            <span>Meta Financeira</span>
-            <div id="meta-valor" class="amount">R$ 0,00</div>
-          </div>
-          <div class="fin-card">
-            <span>Arrecadado</span>
-            <div id="arrecadado-valor" class="amount green">R$ 0,00</div>
-          </div>
-          <div class="fin-card">
-            <span>Gastos Totais</span>
-            <div id="gastos-valor" class="amount red">R$ 0,00</div>
-          </div>
-          <div class="fin-card">
-            <span>Saldo Atual</span>
-            <div id="saldo-valor" class="amount purple">R$ 0,00</div>
-          </div>
-        </div>
-
-        <div class="progress-section">
-          <div class="progress-header">
-            <span>Progresso da Arrecadação</span>
-            <span id="meta-percentual">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="meta-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
-          </div>
-        </div>
-
-        <div class="pix-card">
-          <div class="pix-info">
-            <h4>Ajude o(a) <span id="pix-animal-nome">este animal</span></h4>
-            <p>Chave PIX (CNPJ/Telefone): <strong id="pix-chave">85999999999</strong></p>
-          </div>
-          <button class="btn-copy-pix" onclick="copiarPix()">
-            <i class="fa-regular fa-copy"></i> Copiar PIX
-          </button>
-        </div>
+    <div class="profile-card" id="profile-container">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+        <p style="margin-top: 10px;">Carregando informações do animal...</p>
       </div>
     </div>
 
-    <div class="transparency-section">
+    <div class="table-section">
       <div class="table-header">
-        <div class="table-title">
-          <h3>Prestação de Contas Detalhada</h3>
-          <p>Todas as doações recebidas e gastos efetuados exclusivamente com este animal.</p>
-        </div>
-        <div class="table-filters">
-          <button class="tab-btn active" onclick="filtrarTabela('todos', event)">Todos</button>
-          <button class="tab-btn" onclick="filtrarTabela('Entrada', event)">Entradas (Doações)</button>
-          <button class="tab-btn" onclick="filtrarTabela('Saída', event)">Saídas (Gastos)</button>
-        </div>
+        <h2>Detalhamento de Custos Veterinários e Despesas</h2>
+        <p>Listagem exclusiva de todos os procedimentos, exames e insumos gastos com este animal.</p>
       </div>
 
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Categoria</th>
-              <th>Descrição</th>
-              <th>Valor (R$)</th>
-            </tr>
-          </thead>
-          <tbody id="tabela-transacoes">
-            <tr>
-              <td colspan="5" class="empty-state">Carregando movimentações...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Categoria</th>
+            <th>Descrição</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-gastos">
+          <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Carregando histórico...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <script>
-    // =========================================================================
-    // COLE AQUI OS LINKS DOS CSVs DAS ABAS DA SUA PLANILHA PUBLICADA
-    // =========================================================================
     const URL_CSV_ANIMAIS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=0&single=true&output=csv";
     const URL_CSV_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=1564565152&single=true&output=csv";
 
-    let transacoesDoAnimalAtual = [];
+    function getParametroURL(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
 
-    function formatarMoeda(valor) {
-      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    function formatarMoeda(v) {
+      return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
     function converterValorFloat(str) {
@@ -478,136 +121,147 @@
       return parseFloat(limpo) || 0;
     }
 
-    function obterAnimalIdURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('id');
+    function obterPropriedade(obj, chavesPossiveis) {
+      const keys = Object.keys(obj);
+      for (let key of keys) {
+        const keyClean = key.toLowerCase().trim();
+        for (let busca of chavesPossiveis) {
+          if (keyClean === busca.toLowerCase().trim() || keyClean.includes(busca.toLowerCase().trim())) {
+            return obj[key];
+          }
+        }
+      }
+      return "";
     }
 
-    function carregarDadosAnimal() {
-      const targetId = obterAnimalIdURL();
+    const animalIdTarget = getParametroURL('id');
 
-      Papa.parse(URL_CSV_ANIMAIS, {
+    function carregarPerfilAnimal() {
+      if (!animalIdTarget) {
+        alert("Animal não encontrado!");
+        window.location.href = "index.html";
+        return;
+      }
+
+      Papa.parse(URL_CSV_FINANCEIRO, {
         download: true,
         header: true,
         skipEmptyLines: true,
-        complete: function(resultsAnimais) {
-          const animal = resultsAnimais.data.find(a => (a.id ? a.id.trim() : '') === targetId) || resultsAnimais.data[0];
+        complete: function(resFin) {
+          const gastosAnimal = [];
+          let totalGastos = 0;
 
-          if (!animal) return;
+          resFin.data.forEach(t => {
+            const animalId = obterPropriedade(t, ['animal_id', 'B (animal_id)']).trim();
+            const tipo = obterPropriedade(t, ['tipo', 'D (tipo)']).trim().toLowerCase();
 
-          const meta = converterValorFloat(animal.meta_financeira);
+            // Filtra EXCLUSIVAMENTE as SAÍDAS associadas a este animal ID
+            if (animalId === animalIdTarget && (tipo === 'saída' || tipo === 'saida')) {
+              const valor = converterValorFloat(obterPropriedade(t, ['valor', 'G (valor)']));
+              totalGastos += valor;
+              gastosAnimal.push({
+                data: obterPropriedade(t, ['data', 'C (data)']),
+                categoria: obterPropriedade(t, ['categoria', 'E (categoria)']),
+                descricao: obterPropriedade(t, ['descricao', 'F (descricao)']),
+                valor: valor
+              });
+            }
+          });
 
-          document.getElementById('animal-nome').innerText = animal.nome;
-          document.getElementById('pix-animal-nome').innerText = animal.nome;
-          document.getElementById('animal-especie').innerText = animal.especie;
-          document.getElementById('animal-historia').innerText = animal.historia;
-          document.getElementById('animal-foto').src = animal.foto_url;
-
-          const badge = document.getElementById('animal-badge-status');
-          badge.innerText = animal.status;
-          badge.className = `badge-status ${(animal.status || '').toLowerCase().replace('çã', 'ca')}`;
-
-          Papa.parse(URL_CSV_FINANCEIRO, {
+          Papa.parse(URL_CSV_ANIMAIS, {
             download: true,
             header: true,
             skipEmptyLines: true,
-            complete: function(resultsFin) {
-              const animalIdStr = animal.id ? animal.id.trim() : '';
-              
-              transacoesDoAnimalAtual = resultsFin.data.filter(t => (t.animal_id ? t.animal_id.trim() : '') === animalIdStr);
+            complete: function(resAnimais) {
+              const rawAnimal = resAnimais.data.find(a => obterPropriedade(a, ['id', 'A (id)']).trim() === animalIdTarget);
 
-              let totalEntradas = 0;
-              let totalSaidas = 0;
+              if (!rawAnimal) {
+                alert("Animal não cadastrado na planilha.");
+                window.location.href = "index.html";
+                return;
+              }
 
-              transacoesDoAnimalAtual.forEach(t => {
-                const val = converterValorFloat(t.valor);
-                const tipo = t.tipo ? t.tipo.trim().toLowerCase() : '';
-                if (tipo === 'entrada') {
-                  totalEntradas += val;
-                } else if (tipo === 'saída' || tipo === 'saida') {
-                  totalSaidas += val;
-                }
-              });
+              const animal = {
+                nome: obterPropriedade(rawAnimal, ['nome', 'B (nome)']) || 'Sem Nome',
+                especie: obterPropriedade(rawAnimal, ['especie', 'C (especie)']),
+                status: obterPropriedade(rawAnimal, ['status', 'D (status)']),
+                foto: obterPropriedade(rawAnimal, ['foto_url', 'E (foto_url)']),
+                historia: obterPropriedade(rawAnimal, ['historia', 'F (historia)']),
+                meta: converterValorFloat(obterPropriedade(rawAnimal, ['meta_financeira', 'G (meta_financeira)']))
+              };
 
-              const saldo = totalEntradas - totalSaidas;
-              const percentualMeta = meta > 0 ? Math.min(Math.round((totalEntradas / meta) * 100), 100) : 0;
-
-              document.getElementById('meta-valor').innerText = formatarMoeda(meta);
-              document.getElementById('arrecadado-valor').innerText = formatarMoeda(totalEntradas);
-              document.getElementById('gastos-valor').innerText = formatarMoeda(totalSaidas);
-              document.getElementById('saldo-valor').innerText = formatarMoeda(saldo);
-
-              document.getElementById('meta-percentual').innerText = `${percentualMeta}%`;
-              document.getElementById('meta-bar-fill').style.width = `${percentualMeta}%`;
-
-              renderizarTabela(transacoesDoAnimalAtual);
+              renderizarPerfil(animal, totalGastos);
+              renderizarTabelaGastos(gastosAnimal);
             }
           });
         }
       });
     }
 
-    function renderizarTabela(lista) {
-      const tbody = document.getElementById('tabela-transacoes');
+    function renderizarPerfil(animal, totalGastos) {
+      const container = document.getElementById('profile-container');
+      const percentual = animal.meta > 0 ? Math.min(Math.round((totalGastos / animal.meta) * 100), 100) : 0;
+      const statusClass = (animal.status || '').toLowerCase().replace('çã', 'ca');
+
+      container.innerHTML = `
+        <div class="profile-img-wrapper">
+          <img src="${animal.foto}" alt="${animal.nome}" onerror="this.src='https://via.placeholder.com/400x300?text=Sem+Foto'">
+          <span class="badge-status ${statusClass}">${animal.status}</span>
+        </div>
+        <div class="profile-info">
+          <div>
+            <h1 style="display:inline;">${animal.nome}</h1>
+            <span class="species-tag">${animal.especie}</span>
+          </div>
+          <p class="history-text">${animal.historia}</p>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <label>Meta Orçada</label>
+              <div class="val">${formatarMoeda(animal.meta)}</div>
+            </div>
+            <div class="metric-box">
+              <label>Total Gasto</label>
+              <div class="val red">${formatarMoeda(totalGastos)}</div>
+            </div>
+          </div>
+
+          <div class="progress-box">
+            <div class="progress-labels">
+              <span>Comprometimento da Meta</span>
+              <span>${percentual}%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: ${percentual}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderizarTabelaGastos(gastos) {
+      const tbody = document.getElementById('tabela-gastos');
       tbody.innerHTML = '';
 
-      if (lista.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="empty-state">
-              Nenhuma movimentação financeira registrada para este animal ainda.
-            </td>
-          </tr>
-        `;
+      if (gastos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum gasto registrado para este animal até o momento.</td></tr>`;
         return;
       }
 
-      lista.forEach(item => {
-        const tipoLimpo = item.tipo ? item.tipo.trim().toLowerCase() : '';
-        const isEntrada = tipoLimpo === 'entrada';
-        const badgeClass = isEntrada ? 'entrada' : 'saida';
-        const icon = isEntrada ? 'fa-circle-arrow-down' : 'fa-circle-arrow-up';
-        const sinal = isEntrada ? '+' : '-';
-        const val = converterValorFloat(item.valor);
-
-        const rowHTML = `
+      gastos.forEach(g => {
+        tbody.innerHTML += `
           <tr>
-            <td>${item.data}</td>
-            <td>
-              <span class="badge-trans-type ${badgeClass}">
-                <i class="fa-solid ${icon}"></i> ${item.tipo}
-              </span>
-            </td>
-            <td><strong>${item.categoria}</strong></td>
-            <td>${item.descricao}</td>
-            <td style="font-weight: 700; color: ${isEntrada ? 'var(--success)' : 'var(--danger)'}">
-              ${sinal} ${formatarMoeda(val)}
-            </td>
+            <td>${g.data}</td>
+            <td><span class="tag-saida">Saída</span></td>
+            <td><strong>${g.categoria}</strong></td>
+            <td>${g.descricao}</td>
+            <td style="color: var(--danger); font-weight: 700;">- ${formatarMoeda(g.valor)}</td>
           </tr>
         `;
-        tbody.innerHTML += rowHTML;
       });
     }
 
-    function filtrarTabela(tipo, e) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      if (e) e.target.classList.add('active');
-
-      if (tipo === 'todos') {
-        renderizarTabela(transacoesDoAnimalAtual);
-      } else {
-        const filtradas = transacoesDoAnimalAtual.filter(t => (t.tipo ? t.tipo.trim().toLowerCase() : '') === tipo.toLowerCase());
-        renderizarTabela(filtradas);
-      }
-    }
-
-    function copiarPix() {
-      const chavePix = document.getElementById('pix-chave').innerText;
-      navigator.clipboard.writeText(chavePix);
-      alert("Chave PIX copiada com sucesso!");
-    }
-
-    window.onload = carregarDadosAnimal;
+    window.onload = carregarPerfilAnimal;
   </script>
 </body>
 </html>
