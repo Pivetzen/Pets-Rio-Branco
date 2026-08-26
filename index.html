@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- PapaParse para ler CSV da planilha -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
     :root {
@@ -71,7 +74,7 @@
       padding: 0 20px;
     }
 
-    /* CARDS DE TRANSPARÊNCIA (FINANCEIRO GERAL) */
+    /* CARDS DE TRANSPARÊNCIA */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -118,7 +121,7 @@
       margin-top: 4px;
     }
 
-    /* FILTROS E BUSCA */
+    /* FILTROS */
     .filter-section {
       display: flex;
       flex-wrap: wrap;
@@ -207,7 +210,7 @@
 
     .badge-status.tratamento { background: rgba(245, 158, 11, 0.9); }
     .badge-status.adocao { background: rgba(16, 185, 129, 0.9); }
-    .badge-status.adotado { background: rgba(7f, 70, 229, 0.9); }
+    .badge-status.adotado { background: rgba(79, 70, 229, 0.9); }
 
     .card-content {
       padding: 20px;
@@ -248,7 +251,6 @@
       height: 2.7em;
     }
 
-    /* BARRA FINANCEIRA DO ANIMAL */
     .financial-box {
       background: #f8fafc;
       border-radius: 12px;
@@ -297,6 +299,13 @@
     .btn-detail:hover {
       background: var(--primary-hover);
     }
+
+    .loading-container {
+      text-align: center;
+      padding: 60px 0;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -339,82 +348,116 @@
     <div class="filter-section">
       <h2 class="section-title">Nossos Afilhados</h2>
       <div class="filters">
-        <button class="btn-filter active" onclick="filtrar('todos')">Todos</button>
-        <button class="btn-filter" onclick="filtrar('Cachorro')">Cachorros</button>
-        <button class="btn-filter" onclick="filtrar('Gato')">Gatos</button>
-        <button class="btn-filter" onclick="filtrar('Tratamento')">Em Tratamento</button>
-        <button class="btn-filter" onclick="filtrar('Adoção')">Para Adoção</button>
+        <button class="btn-filter active" onclick="filtrar('todos', event)">Todos</button>
+        <button class="btn-filter" onclick="filtrar('Cachorro', event)">Cachorros</button>
+        <button class="btn-filter" onclick="filtrar('Gato', event)">Gatos</button>
+        <button class="btn-filter" onclick="filtrar('Tratamento', event)">Em Tratamento</button>
+        <button class="btn-filter" onclick="filtrar('Adoção', event)">Para Adoção</button>
       </div>
     </div>
 
-    <!-- CARDS DE ANIMAIS -->
+    <!-- GRID DOS ANIMAIS -->
     <div class="animals-grid" id="grid-animais">
-      <!-- Os cards serão injetados dinamicamente via JS -->
+      <div class="loading-container" style="grid-column: 1 / -1;">
+        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+        <p style="margin-top: 10px;">Carregando dados em tempo real da planilha...</p>
+      </div>
     </div>
 
   </div>
 
   <script>
-    // DADOS MOCKADOS PARA TESTE (Substituir pela leitura da sua planilha)
-    const animais = [
-      {
-        id: 1,
-        nome: "Thor",
-        especie: "Cachorro",
-        status: "Tratamento",
-        foto: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=600",
-        historia: "Resgatado na Av. Principal com fratura na patinha traseira. Precisa de raio-x e medicamentos.",
-        meta: 1200.00,
-        arrecadado: 850.00
-      },
-      {
-        id: 2,
-        nome: "Mia",
-        especie: "Gato",
-        status: "Adoção",
-        foto: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=600",
-        historia: "Resgatada com seus 4 filhotes. Já foi castrada, vacinada e agora busca um lar amoroso.",
-        meta: 400.00,
-        arrecadado: 400.00
-      },
-      {
-        id: 3,
-        nome: "Bob",
-        especie: "Cachorro",
-        status: "Adoção",
-        foto: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&q=80&w=600",
-        historia: "Encontrado muito magrinho em um terreno baldio. Já ganhou peso e está cheio de energia!",
-        meta: 500.00,
-        arrecadado: 320.00
-      }
-    ];
+    // =========================================================================
+    // COLE AQUI OS LINKS DOS CSVs DAS ABAS DA SUA PLANILHA PUBLICADA
+    // =========================================================================
+    const URL_CSV_ANIMAIS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=0&single=true&output=csv";
+    const URL_CSV_FINANCEIRO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSjf1I1A2-shkf9JdpBC7zfyuKwoRVjMGvhfFMgOs0Zt-0vobmSYPFYOoP9VUam14T_M1BC2PPP1WzP/pub?gid=1564565152&single=true&output=csv";
 
-    const resumoGeral = {
-      totalArrecadado: 2550.00,
-      totalGastos: 1890.00
-    };
+    let listaAnimaisGeral = [];
 
-    // FUNÇÃO PARA FORMATAR MOEDA BRASILEIRA (R$)
     function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    // CARREGAR RESUMO FINANCEIRO SUPERIOR
-    function carregarKPIs() {
-      const saldo = resumoGeral.totalArrecadado - resumoGeral.totalGastos;
-      document.getElementById('total-arrecadado').innerText = formatarMoeda(resumoGeral.totalArrecadado);
-      document.getElementById('total-gastos').innerText = formatarMoeda(resumoGeral.totalGastos);
-      document.getElementById('saldo-atual').innerText = formatarMoeda(saldo);
+    function converterValorFloat(str) {
+      if (!str) return 0;
+      // Trata formato PT-BR se houver vírgula
+      let limpo = str.toString().replace("R$", "").trim().replace(".", "").replace(",", ".");
+      return parseFloat(limpo) || 0;
     }
 
-    // CARREGAR LISTA DE ANIMAIS
+    function carregarDadosPlanilha() {
+      // Carrega primeiro o CSV Financeiro para fazer o somatório total
+      Papa.parse(URL_CSV_FINANCEIRO, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(resultsFin) {
+          const transacoes = resultsFin.data;
+          
+          let totalArrecadado = 0;
+          let totalGastos = 0;
+
+          // Mapeia arredados por animal
+          const arrecadadoPorAnimal = {};
+
+          transacoes.forEach(t => {
+            const val = converterValorFloat(t.valor);
+            const tipo = t.tipo ? t.tipo.trim() : '';
+            const animalId = t.animal_id ? t.animal_id.trim() : '0';
+
+            if (tipo.toLowerCase() === 'entrada') {
+              totalArrecadado += val;
+              arrecadadoPorAnimal[animalId] = (arrecadadoPorAnimal[animalId] || 0) + val;
+            } else if (tipo.toLowerCase() === 'saída' || tipo.toLowerCase() === 'saida') {
+              totalGastos += val;
+            }
+          });
+
+          // Atualiza o topo do dashboard
+          document.getElementById('total-arrecadado').innerText = formatarMoeda(totalArrecadado);
+          document.getElementById('total-gastos').innerText = formatarMoeda(totalGastos);
+          document.getElementById('saldo-atual').innerText = formatarMoeda(totalArrecadado - totalGastos);
+
+          // Agora carrega a aba de Animais
+          Papa.parse(URL_CSV_ANIMAIS, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(resultsAnimais) {
+              listaAnimaisGeral = resultsAnimais.data.map(a => {
+                const idStr = a.id ? a.id.trim() : '';
+                return {
+                  id: idStr,
+                  nome: a.nome,
+                  especie: a.especie,
+                  status: a.status,
+                  foto: a.foto_url,
+                  historia: a.historia,
+                  meta: converterValorFloat(a.meta_financeira),
+                  arrecadado: arrecadadoPorAnimal[idStr] || 0
+                };
+              });
+
+              renderizarAnimais(listaAnimaisGeral);
+            }
+          });
+        }
+      });
+    }
+
     function renderizarAnimais(lista) {
       const grid = document.getElementById('grid-animais');
       grid.innerHTML = '';
 
+      if (lista.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">Nenhum animal encontrado para esta categoria.</p>`;
+        return;
+      }
+
       lista.forEach(animal => {
-        const percentual = Math.min(Math.round((animal.arrecadado / animal.meta) * 100), 100);
-        const statusClass = animal.status.toLowerCase().replace('çã', 'ca');
+        const percentual = animal.meta > 0 ? Math.min(Math.round((animal.arrecadado / animal.meta) * 100), 100) : 0;
+        const statusClass = (animal.status || '').toLowerCase().replace('çã', 'ca');
 
         const cardHTML = `
           <div class="animal-card">
@@ -449,25 +492,19 @@
       });
     }
 
-    // FILTRO DE CATEGORIAS
-    function filtrar(categoria) {
-      // Atualizar botões
+    function filtrar(categoria, e) {
       document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      if (e) e.target.classList.add('active');
 
       if (categoria === 'todos') {
-        renderizarAnimais(animais);
+        renderizarAnimais(listaAnimaisGeral);
       } else {
-        const filtrados = animais.filter(a => a.especie === categoria || a.status === categoria);
+        const filtrados = listaAnimaisGeral.filter(a => a.especie === categoria || a.status === categoria);
         renderizarAnimais(filtrados);
       }
     }
 
-    // INICIALIZAÇÃO
-    window.onload = () => {
-      carregarKPIs();
-      renderizarAnimais(animais);
-    };
+    window.onload = carregarDadosPlanilha;
   </script>
 </body>
 </html>
