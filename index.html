@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resgate Animal Regional - Transparência e Adoção</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --radius: 16px;
+      --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* CARDS DE TRANSPARÊNCIA (FINANCEIRO GERAL) */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .kpi-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .kpi-icon.green { background: #d1fae5; color: var(--success); }
+    .kpi-icon.red { background: #fee2e2; color: var(--danger); }
+    .kpi-icon.purple { background: #e0e7ff; color: var(--primary); }
+
+    .kpi-info h3 {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-info .value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    /* FILTROS E BUSCA */
+    .filter-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-filter {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-filter:hover, .btn-filter.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* GRID DOS ANIMAIS */
+    .animals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .animal-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .animal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-img-wrapper {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    .card-img-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .badge-status {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      color: white;
+    }
+
+    .badge-status.tratamento { background: rgba(245, 158, 11, 0.9); }
+    .badge-status.adocao { background: rgba(16, 185, 129, 0.9); }
+    .badge-status.adotado { background: rgba(7f, 70, 229, 0.9); }
+
+    .card-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .animal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .animal-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .animal-species {
+      font-size: 0.85rem;
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .animal-history {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 2.7em;
+    }
+
+    /* BARRA FINANCEIRA DO ANIMAL */
+    .financial-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: auto;
+      margin-bottom: 16px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .fin-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .btn-detail {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: background 0.2s ease;
+    }
+
+    .btn-detail:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <h1><i class="fa-solid fa-paw"></i> Resgate Animal Regional</h1>
+      <p>Acompanhe com total transparência todos os nossos resgates, custos veterinários e doações recebidas.</p>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- KPI DASHBOARD -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        <div class="kpi-info">
+          <h3>Total Arrecadado</h3>
+          <div class="value" id="total-arrecadado">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon red"><i class="fa-solid fa-receipt"></i></div>
+        <div class="kpi-info">
+          <h3>Total de Gastos</h3>
+          <div class="value" id="total-gastos">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="fa-solid fa-piggy-bank"></i></div>
+        <div class="kpi-info">
+          <h3>Saldo Atual</h3>
+          <div class="value" id="saldo-atual">R$ 0,00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLES E FILTROS -->
+    <div class="filter-section">
+      <h2 class="section-title">Nossos Afilhados</h2>
+      <div class="filters">
+        <button class="btn-filter active" onclick="filtrar('todos')">Todos</button>
+        <button class="btn-filter" onclick="filtrar('Cachorro')">Cachorros</button>
+        <button class="btn-filter" onclick="filtrar('Gato')">Gatos</button>
+        <button class="btn-filter" onclick="filtrar('Tratamento')">Em Tratamento</button>
+        <button class="btn-filter" onclick="filtrar('Adoção')">Para Adoção</button>
+      </div>
+    </div>
+
+    <!-- CARDS DE ANIMAIS -->
+    <div class="animals-grid" id="grid-animais">
+      <!-- Os cards serão injetados dinamicamente via JS -->
+    </div>
+
+  </div>
+
+  <script>
+    // DADOS MOCKADOS PARA TESTE (Substituir pela leitura da sua planilha)
+    const animais = [
+      {
+        id: 1,
+        nome: "Thor",
+        especie: "Cachorro",
+        status: "Tratamento",
+        foto: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=600",
+        historia: "Resgatado na Av. Principal com fratura na patinha traseira. Precisa de raio-x e medicamentos.",
+        meta: 1200.00,
+        arrecadado: 850.00
+      },
+      {
+        id: 2,
+        nome: "Mia",
+        especie: "Gato",
+        status: "Adoção",
+        foto: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=600",
+        historia: "Resgatada com seus 4 filhotes. Já foi castrada, vacinada e agora busca um lar amoroso.",
+        meta: 400.00,
+        arrecadado: 400.00
+      },
+      {
+        id: 3,
+        nome: "Bob",
+        especie: "Cachorro",
+        status: "Adoção",
+        foto: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&q=80&w=600",
+        historia: "Encontrado muito magrinho em um terreno baldio. Já ganhou peso e está cheio de energia!",
+        meta: 500.00,
+        arrecadado: 320.00
+      }
+    ];
+
+    const resumoGeral = {
+      totalArrecadado: 2550.00,
+      totalGastos: 1890.00
+    };
+
+    // FUNÇÃO PARA FORMATAR MOEDA BRASILEIRA (R$)
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // CARREGAR RESUMO FINANCEIRO SUPERIOR
+    function carregarKPIs() {
+      const saldo = resumoGeral.totalArrecadado - resumoGeral.totalGastos;
+      document.getElementById('total-arrecadado').innerText = formatarMoeda(resumoGeral.totalArrecadado);
+      document.getElementById('total-gastos').innerText = formatarMoeda(resumoGeral.totalGastos);
+      document.getElementById('saldo-atual').innerText = formatarMoeda(saldo);
+    }
+
+    // CARREGAR LISTA DE ANIMAIS
+    function renderizarAnimais(lista) {
+      const grid = document.getElementById('grid-animais');
+      grid.innerHTML = '';
+
+      lista.forEach(animal => {
+        const percentual = Math.min(Math.round((animal.arrecadado / animal.meta) * 100), 100);
+        const statusClass = animal.status.toLowerCase().replace('çã', 'ca');
+
+        const cardHTML = `
+          <div class="animal-card">
+            <div class="card-img-wrapper">
+              <img src="${animal.foto}" alt="${animal.nome}">
+              <span class="badge-status ${statusClass}">${animal.status}</span>
+            </div>
+            <div class="card-content">
+              <div class="animal-header">
+                <h3 class="animal-name">${animal.nome}</h3>
+                <span class="animal-species">${animal.especie}</span>
+              </div>
+              <p class="animal-history">${animal.historia}</p>
+              
+              <div class="financial-box">
+                <div class="fin-labels">
+                  <span>Meta: ${formatarMoeda(animal.meta)}</span>
+                  <span>${percentual}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${percentual}%"></div>
+                </div>
+              </div>
+
+              <a href="animal.html?id=${animal.id}" class="btn-detail">
+                Ver Prestação de Contas <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        `;
+        grid.innerHTML += cardHTML;
+      });
+    }
+
+    // FILTRO DE CATEGORIAS
+    function filtrar(categoria) {
+      // Atualizar botões
+      document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (categoria === 'todos') {
+        renderizarAnimais(animais);
+      } else {
+        const filtrados = animais.filter(a => a.especie === categoria || a.status === categoria);
+        renderizarAnimais(filtrados);
+      }
+    }
+
+    // INICIALIZAÇÃO
+    window.onload = () => {
+      carregarKPIs();
+      renderizarAnimais(animais);
+    };
+  </script>
+</body>
+</html>
